@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ASHOK GTA WORLD — First Playable Build</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#91b7cf;font-family:system-ui,Arial;color:white;touch-action:none}#hud{position:fixed;top:10px;left:10px;z-index:5;background:#101827bb;border:1px solid #ffffff40;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.45;max-width:75vw}#camera{position:fixed;top:10px;right:10px;z-index:5;border:1px solid #ffffff70;border-radius:12px;padding:11px 14px;background:#111827dd;color:white;font-weight:700}#controls{position:fixed;bottom:18px;left:18px;z-index:5;display:grid;grid-template-columns:58px 58px 58px;grid-template-rows:58px 58px;gap:6px}button{user-select:none;-webkit-user-select:none;touch-action:none} .pad{border:1px solid #ffffff70;background:#101827bb;color:white;border-radius:15px;font-size:24px}.up{grid-column:2;grid-row:1}.left{grid-column:1;grid-row:2}.down{grid-column:2;grid-row:2}.right{grid-column:3;grid-row:2}#actions{position:fixed;bottom:22px;right:18px;z-index:5;display:flex;flex-direction:column;gap:10px}#actions button{border:1px solid #ffffff70;background:#101827dd;color:white;border-radius:14px;padding:13px 14px;font-weight:700}#tip{position:fixed;bottom:4px;left:50%;transform:translateX(-50%);z-index:4;background:#10182799;padding:5px 9px;border-radius:8px;font-size:11px;white-space:nowrap}
+</style>
+</head>
+<body>
+<div id="hud"><b>ASHOK GTA WORLD</b><br>First playable 3D city build<br><span id="status">Walk around • Explore the city</span></div>
+<button id="camera">CAMERA: THIRD</button>
+<div id="controls"><button class="pad up" data-move="forward">▲</button><button class="pad left" data-move="left">◀</button><button class="pad down" data-move="back">▼</button><button class="pad right" data-move="right">▶</button></div>
+<div id="actions"><button id="run">RUN: OFF</button><button id="car">CAR: NEARBY</button></div>
+<div id="tip">Touch controls or WASD / arrow keys • Internet required for 3D engine</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9dc4dc);scene.fog=new THREE.Fog(0x9dc4dc,65,210);
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,500);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=false;renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff,0x667788,2));const sun=new THREE.DirectionalLight(0xfff1d1,2.1);sun.position.set(-30,60,25);scene.add(sun);
+const mat=(color,rough=.9)=>new THREE.MeshStandardMaterial({color,roughness:rough});
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mat(0x628b57));ground.rotation.x=-Math.PI/2;ground.position.y=-.08;scene.add(ground);
+// Roads and sidewalks
+function box(w,h,d,x,y,z,m){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);scene.add(o);return o}
+box(18,.04,240,0,0,0,mat(0x343a40));box(240,.04,18,0,.005,0,mat(0x343a40));
+for(let i=-110;i<=110;i+=12){box(.18,.05,2.8,0,.04,i,mat(0xf2e8c8));box(2.8,.05,.18,i,.04,0,mat(0xf2e8c8));}
+for(let side of [-1,1]){box(2,.12,240,side*10,.04,0,mat(0xbab8ae));box(240,.12,2,0,.04,side*10,mat(0xbab8ae));}
+// Buildings in a simple city grid
+const colors=[0xc6b6a2,0xb7c3c9,0xd1c8b4,0x9caeb4,0xd8bba2,0xaeb5a8];
+for(let x=-90;x<=90;x+=18){for(let z=-90;z<=90;z+=18){if(Math.abs(x)<18||Math.abs(z)<18)continue;const w=8+Math.random()*4,d=8+Math.random()*4,h=7+Math.random()*25;const b=box(w,h,d,x,h/2,z,mat(colors[Math.floor(Math.random()*colors.length)]));const roof=box(w*.8,.25,d*.8,x,h+.12,z,mat(0x555d62));}}
+// Villa and pool in a fenced compound
+const villaX=38,villaZ=37;box(23,.25,20,villaX,.1,villaZ,mat(0xd6c8b2));box(19,6,15,villaX,3.2,villaZ,mat(0xe5dccb));box(20,.5,16,villaX,6.4,villaZ,mat(0x4c5159));box(8,.3,6,villaX+3,6.8,villaZ-1,mat(0x393f47));
+for(let x=villaX-13;x<=villaX+13;x+=2) {box(.12,1.5,.12,x,.8,villaZ+12,mat(0x4a4d4d));box(.12,1.5,.12,x,.8,villaZ-12,mat(0x4a4d4d));}
+box(10,.08,6,villaX-2,.2,villaZ+16,mat(0x35a8cb,.3));
+// Car
+const carGroup=new THREE.Group();scene.add(carGroup);const body=new THREE.Mesh(new THREE.BoxGeometry(2.3,.65,4.2),mat(0x9b1c2b,.45));body.position.y=.8;carGroup.add(body);const cabin=new THREE.Mesh(new THREE.BoxGeometry(1.65,.7,1.8),mat(0x8db4c6,.3));cabin.position.set(0,1.42,-.2);carGroup.add(cabin);for(const x of [-1,1])for(const z of [-1.35,1.35]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.22,12),mat(0x191919));wheel.rotation.z=Math.PI/2;wheel.position.set(x,.42,z);carGroup.add(wheel);}carGroup.position.set(5,0,8);
+// Main boy character (stylized low-poly placeholder)
+const player=new THREE.Group();scene.add(player);const skin=mat(0xb9825c),shirt=mat(0x1d3557),pants=mat(0x252b34),hair=mat(0x211b18);
+const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.42,.7,3,7),shirt);torso.position.y=1.35;player.add(torso);const head=new THREE.Mesh(new THREE.SphereGeometry(.31,12,10),skin);head.position.y=2.05;player.add(head);const haircap=new THREE.Mesh(new THREE.SphereGeometry(.315,12,7,0,Math.PI*2,0,Math.PI*.55),hair);haircap.position.y=2.14;player.add(haircap);for(let s of [-1,1]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.14,.65,2,6),pants);leg.position.set(s*.19,.52,0);player.add(leg);const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.58,2,6),skin);arm.position.set(s*.49,1.35,0);arm.rotation.z=s*.12;player.add(arm);}
+player.position.set(0,0,3);
+// Female NPCs: decorative non-interactive city pedestrians
+const npcMat=[mat(0xb54a62),mat(0x6546a8),mat(0xe2a33a),mat(0x277e76)];
+function npc(x,z,i){const g=new THREE.Group();const dress=new THREE.Mesh(new THREE.CapsuleGeometry(.32,.75,3,7),npcMat[i%npcMat.length]);dress.position.y=1.05;g.add(dress);const h=new THREE.Mesh(new THREE.SphereGeometry(.25,10,9),skin);h.position.y=1.85;g.add(h);const hair2=new THREE.Mesh(new THREE.SphereGeometry(.27,10,7,0,Math.PI*2,0,Math.PI*.6),hair);hair2.position.y=1.94;g.add(hair2);g.position.set(x,0,z);scene.add(g);return g;}
+const npcs=[npc(4,-5,0),npc(-6,-8,1),npc(12,5,2),npc(-13,11,3),npc(31,27,0),npc(45,29,1),npc(29,48,2)];
+let third=true,running=false,driving=false;const keys={};const held={};let yaw=0;
+function setMove(k,v){held[k]=v;}document.querySelectorAll('[data-move]').forEach(b=>{const k=b.dataset.move;b.addEventListener('pointerdown',e=>{e.preventDefault();setMove(k,true);b.setPointerCapture(e.pointerId)});for(const ev of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(ev,()=>setMove(k,false));});
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key==='Shift'){running=true;document.querySelector('#run').textContent='RUN: ON';}});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;if(e.key==='Shift'){running=false;document.querySelector('#run').textContent='RUN: OFF';}});
+document.querySelector('#run').onclick=()=>{running=!running;document.querySelector('#run').textContent='RUN: '+(running?'ON':'OFF')};document.querySelector('#camera').onclick=()=>{third=!third;document.querySelector('#camera').textContent='CAMERA: '+(third?'THIRD':'FIRST')};
+document.querySelector('#car').onclick=()=>{const dist=player.position.distanceTo(carGroup.position);if(driving){driving=false;player.visible=true;player.position.copy(carGroup.position).add(new THREE.Vector3(2,0,0));document.querySelector('#status').textContent='On foot • Explore the city';}else if(dist<5){driving=true;player.visible=false;document.querySelector('#status').textContent='Driving • Use arrows / WASD';}else{document.querySelector('#status').textContent='Walk closer to the red car first';}};
+function moveVec(){let f=(keys.w||keys.arrowup||held.forward?1:0)-(keys.s||keys.arrowdown||held.back?1:0);let r=(keys.d||keys.arrowright||held.right?1:0)-(keys.a||keys.arrowleft||held.left?1:0);return {f,r}}
+const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);const {f,r}=moveVec();const speed=(running?10:5)*dt;if(driving){carGroup.position.x+=r*speed*1.25;carGroup.position.z-=f*speed*1.25;if(Math.abs(f)+Math.abs(r)>.01)carGroup.rotation.y=Math.atan2(r,-f);}else{const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));player.position.addScaledVector(forward,-f*speed);player.position.addScaledVector(right,r*speed);player.position.x=THREE.MathUtils.clamp(player.position.x,-115,115);player.position.z=THREE.MathUtils.clamp(player.position.z,-115,115);if(Math.abs(f)+Math.abs(r)>.01)player.rotation.y=Math.atan2(r,-f)+yaw;}
+const target=driving?carGroup.position:player.position;let camPos;if(third){camPos=new THREE.Vector3(target.x+Math.sin(yaw)*7,target.y+4.2,target.z+Math.cos(yaw)*7);if(driving)camPos.set(target.x+5,target.y+3.3,target.z+7);}else{camPos=target.clone().add(new THREE.Vector3(0,driving?2.2:1.75,0));}
+camera.position.lerp(camPos,.12);const look=target.clone().add(new THREE.Vector3(0,third?1.2:1.7,0));camera.lookAt(look);renderer.render(scene,camera);}
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});animate();
+</script>
+</body></html>
